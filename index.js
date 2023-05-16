@@ -4,7 +4,7 @@ let pokemonArray = [];
 let selectedTypes = [];
 let isShinyMode = false;
 
-const updatePaginationDiv = (currentPage, numPages, filteredArrayLength) => {
+const updatePaginationDiv = (currentPage, numPages, filteredArrayLength, totalPokemon) => {
     $("#pagination").empty();
     $("#paginationText").empty();
 
@@ -25,40 +25,30 @@ const updatePaginationDiv = (currentPage, numPages, filteredArrayLength) => {
         }
     }
 
-    // Numbered buttons
     for (let i = startPage; i <= endPage; i++) {
         const activeClass = i === currentPage ? "active" : "";
         $("#pagination").append(`
       <button class="btn btn-primary page ml-1 numberedButtons ${activeClass}" value="${i}">${i}</button>
     `);
     }
-
-    // Next button
     if (currentPage < numPages) {
         $("#pagination").append(`
       <button class="btn btn-primary page ml-1 nextButton" value="next">&gt;</button>
     `);
     }
 
-    // Hide previous button if on first page
     if (currentPage === 1) {
         $(".previousButton").hide();
     }
 
-    // Hide next button if on last page
     if (currentPage === numPages) {
         $(".nextButton").hide();
     }
 
-    // Center pagination buttons
-    $("#paginationContainer").css("display", "flex");
-    $("#paginationContainer").css("justify-content", "center");
-
-    // Display total number of Pokemon
-    $("#paginationText").text(`Total Pokemon: ${filteredArrayLength}`);
+    const startPokemon = (currentPage - 1) * PAGE_SIZE + 1;
+    const endPokemon = Math.min(currentPage * PAGE_SIZE, totalPokemon);
+    $("#paginationText").text(`Showing ${startPokemon} - ${endPokemon} Pokemon out of ${totalPokemon}`);
 };
-
-
 
 
 const filterPokemonByType = (pokemonArray) => {
@@ -79,7 +69,6 @@ const filterPokemonByType = (pokemonArray) => {
 };
 
 
-
 const updateTypeDropdowns = (typeArray) => {
     $("#typeDropdown1").empty().append(`<option value="">All</option>`);
     $("#typeDropdown2").empty().append(`<option value="">All</option>`);
@@ -97,12 +86,11 @@ const updateTypeDropdowns = (typeArray) => {
 };
 
 
-
 const populatePokemonCards = (pokemonArray) => {
     $("#pokeCards").empty();
     pokemonArray.forEach((pokemon) => {
         const types = pokemon.types.map((type) => type.type.name);
-        const spriteUrl = isShinyMode ? pokemon.sprites.front_shiny : pokemon.sprites.front_default; // Use the appropriate sprite URL
+        const spriteUrl = isShinyMode ? pokemon.sprites.front_shiny : pokemon.sprites.front_default;
         $("#pokeCards").append(`
         <div class="pokeCard card" pokeName="${pokemon.name}">
           <h3>${pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h3>
@@ -115,16 +103,17 @@ const populatePokemonCards = (pokemonArray) => {
     });
 };
 
+
 const paginate = (currentPage, PAGE_SIZE, pokemonArray) => {
     const filteredPokemonArray = filterPokemonByType(pokemonArray);
     const selectedPokemonArray = filteredPokemonArray.slice(
         (currentPage - 1) * PAGE_SIZE,
         currentPage * PAGE_SIZE
     );
-
     populatePokemonCards(selectedPokemonArray);
+    const numFilteredPages = Math.ceil(filteredPokemonArray.length / PAGE_SIZE);
+    updatePaginationDiv(currentPage, PAGE_SIZE, filteredPokemonArray.length, pokemonArray.length);
 };
-
 
 
 const setup = async () => {
@@ -141,16 +130,14 @@ const setup = async () => {
     };
 
     let pokemonDetailsArray = await getPokemonDetails();
-
     const typesResponse = await axios.get("https://pokeapi.co/api/v2/type");
     const typesArray = typesResponse.data.results;
     updateTypeDropdowns(typesArray);
-
     const numPages = Math.ceil(pokemonArray.length / PAGE_SIZE);
 
     // Populate and paginate the initial Pokemon list
     paginate(currentPage, PAGE_SIZE, pokemonDetailsArray);
-    updatePaginationDiv(currentPage, numPages, pokemonDetailsArray.length);
+    updatePaginationDiv(currentPage, numPages, pokemonDetailsArray.length, pokemonArray.length);
 
     // Pop up modal when clicking on a Pokemon card
     $("body").on("click", ".pokeCard", async function(e) {
@@ -202,7 +189,6 @@ const setup = async () => {
         const filteredPokemonArray = filterPokemonByType(pokemonDetailsArray);
         const numFilteredPages = Math.ceil(filteredPokemonArray.length / PAGE_SIZE);
         paginate(currentPage, PAGE_SIZE, filteredPokemonArray);
-        // Update pagination buttons
         updatePaginationDiv(currentPage, numFilteredPages, filteredPokemonArray.length);
     });
 
@@ -211,7 +197,6 @@ const setup = async () => {
         const filteredPokemonArray = filterPokemonByType(pokemonDetailsArray);
         const numFilteredPages = Math.ceil(filteredPokemonArray.length / PAGE_SIZE);
         paginate(currentPage, PAGE_SIZE, filteredPokemonArray);
-        // Update pagination buttons
         updatePaginationDiv(currentPage, numFilteredPages, filteredPokemonArray.length);
     });
 
@@ -220,17 +205,14 @@ const setup = async () => {
         const filteredPokemonArray = filterPokemonByType(pokemonDetailsArray);
         const numFilteredPages = Math.ceil(filteredPokemonArray.length / PAGE_SIZE);
         paginate(currentPage, PAGE_SIZE, filteredPokemonArray);
-        // Update pagination buttons
         updatePaginationDiv(currentPage, numFilteredPages, filteredPokemonArray.length);
     });
-
-
 
     // Add event listener to type dropdown menus
     $("#typeDropdown1").on("change", function() {
         selectedTypes[0] = $(this).val();
         if ($(this).val() === "") {
-            selectedTypes = []; // Reset the selectedTypes array
+            selectedTypes = [];
             $("#typeDropdown2").val("").prop("disabled", true);
         } else {
             $("#typeDropdown2").prop("disabled", false);
@@ -245,7 +227,7 @@ const setup = async () => {
     $("#typeDropdown2").on("change", function() {
         selectedTypes[1] = $(this).val();
         if ($("#typeDropdown2").val() === "") {
-            selectedTypes.splice(1, 1); // Remove the second type from the selectedTypes array
+            selectedTypes.splice(1, 1);
         }
         currentPage = 1;
         const filteredPokemonArray = filterPokemonByType(pokemonDetailsArray);
@@ -256,15 +238,11 @@ const setup = async () => {
 
     $("#shinyModeCheckbox").on("change", function() {
         isShinyMode = $(this).is(":checked");
-
-        // Repopulate and paginate the Pokemon list based on the shiny mode
         const filteredPokemonArray = filterPokemonByType(pokemonDetailsArray);
         const numFilteredPages = Math.ceil(filteredPokemonArray.length / PAGE_SIZE);
         paginate(currentPage, PAGE_SIZE, filteredPokemonArray);
         updatePaginationDiv(currentPage, numFilteredPages, filteredPokemonArray.length);
     });
-
-
 
 };
 
