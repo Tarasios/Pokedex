@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Pokemon Memory Game</title>
+    <link rel="stylesheet" href="cards.css" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div id="header-info">
+                <span>Timer:</span>
+                <span id="timer">00:00</span></br>
+                <span id="click-counter">Clicks: 0</span></br>
+                <span id="pairs-counter">Pairs solved: 0 / 0</span></br>
+            </div>
+            <button id="start-button">Start</button>
+            <button onclick="resetGame()">Reset</button>
+            <select id="difficulty" onchange="changeDifficulty()">
+                <option value="easy">Easy</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Hard</option>
+            </select>
+            <div class="theme">
+                <label for="theme">Theme:</label>
+                <input type="radio" id="normalTheme" name="theme" value="normal" checked="checked" onchange="changeTheme()" />
+                <label for="normalTheme">Normal</label>
+                <input type="radio" id="shinyTheme" name="theme" value="shiny" onchange="changeTheme()" />
+                <label for="shinyTheme">Shiny</label>
+            </div>
+        </header>
+        <div id="game"></div>
+        <button onclick="activatePowerup()">Powerup</button>
+        <div id="modal" class="modal">
+            <div class="modal-content">
+              <span class="close">&times;</span>
+              <h2>You Win!</h2>
+              <p>Congratulations, you have solved all the pairs!</p>
+            </div>
+          </div>          
+    </div>    
+    <script src="cards.js"></script>
+</body>
+</html>
